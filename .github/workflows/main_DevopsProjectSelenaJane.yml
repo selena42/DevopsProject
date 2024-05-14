@@ -77,4 +77,4 @@ jobs:
         app-name: 'DevopsProjectSelenaJane'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_c1b2d92816fb4be4af1a564abeac7bc8 }}
-        images: 'ghcr.io/${{ secrets.AzureAppService_ContainerUsername_ad48eafb97254e51b3a7d636b00a5159 }}/devopsproject:${{ github.sha }}'
+        images: 'ghcr.io/${{ secrets.AzureAppService_ContainerUsername_ad48eafb97254e51b3a7d636b00a5159 }}/devopsproject:main'
