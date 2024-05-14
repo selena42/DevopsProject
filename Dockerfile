@@ -1,20 +1,25 @@
-# Base image, from microsoft that contains the dotnet sdk to build the project
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
-WORKDIR /App
+#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
  
-# Copy everything
-COPY . ./
-# Restore as distinct layers
-RUN dotnet restore
-# Build and publish a release
-RUN dotnet publish -c Release -o out
- 
-# Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-WORKDIR /App
-# HTTP and HTTPS ports should be exposed so that the web application can be accessed from outside the container
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER app
+WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
-COPY --from=build-env /App/out .
-# Entry point of the runtime image
-ENTRYPOINT ["dotnet", "DotNet.Docker.dll"]
+ 
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["DevopsProject.csproj", "."]
+RUN dotnet restore "./DevopsProject.csproj"
+COPY . .
+WORKDIR "/src/."
+RUN dotnet build "./DevopsProject.csproj" -c $BUILD_CONFIGURATION -o /app/build
+ 
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./DevopsProject.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+ 
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "DevopsProject.dll"]
